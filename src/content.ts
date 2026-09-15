@@ -64,12 +64,11 @@ function init(): void {
   }
 
   let panelHost: HTMLDivElement | null = null;
-  let htmlTextarea: HTMLTextAreaElement | null = null;
-  let cssTextarea: HTMLTextAreaElement | null = null;
+  let snippetTextarea: HTMLTextAreaElement | null = null;
 
-  function ensurePanel(): { html: HTMLTextAreaElement; css: HTMLTextAreaElement } {
-    if (panelHost && htmlTextarea && cssTextarea) {
-      return { html: htmlTextarea, css: cssTextarea };
+  function ensurePanel(): { snippet: HTMLTextAreaElement } {
+    if (panelHost && snippetTextarea) {
+      return { snippet: snippetTextarea };
     }
 
     panelHost = document.createElement("div");
@@ -131,7 +130,7 @@ function init(): void {
         flex-direction: column;
       }
       textarea {
-        height: 160px;
+        height: 400px;
         margin: 6px 12px 12px;
         padding: 8px;
         background: #111;
@@ -161,22 +160,14 @@ function init(): void {
     const body = document.createElement("div");
     body.className = "body";
 
-    const htmlLabel = document.createElement("div");
-    htmlLabel.className = "field-label";
-    htmlLabel.textContent = "HTML";
-    const htmlArea = document.createElement("textarea");
-    htmlArea.readOnly = true;
+    const snippetLabel = document.createElement("div");
+    snippetLabel.className = "field-label";
+    snippetLabel.textContent = "HTML + CSS";
+    const snippetArea = document.createElement("textarea");
+    snippetArea.readOnly = true;
 
-    const cssLabel = document.createElement("div");
-    cssLabel.className = "field-label";
-    cssLabel.textContent = "CSS";
-    const cssArea = document.createElement("textarea");
-    cssArea.readOnly = true;
-
-    body.appendChild(htmlLabel);
-    body.appendChild(htmlArea);
-    body.appendChild(cssLabel);
-    body.appendChild(cssArea);
+    body.appendChild(snippetLabel);
+    body.appendChild(snippetArea);
 
     panel.appendChild(header);
     panel.appendChild(body);
@@ -184,15 +175,13 @@ function init(): void {
     shadow.appendChild(panel);
 
     document.documentElement.appendChild(panelHost);
-    htmlTextarea = htmlArea;
-    cssTextarea = cssArea;
-    return { html: htmlArea, css: cssArea };
+    snippetTextarea = snippetArea;
+    return { snippet: snippetArea };
   }
 
   function showPanel(html: string, css: string): void {
-    const { html: htmlArea, css: cssArea } = ensurePanel();
-    htmlArea.value = html;
-    cssArea.value = css;
+    const { snippet } = ensurePanel();
+    snippet.value = `<style>\n${css}\n</style>\n${html}`;
     if (panelHost) {
       panelHost.style.display = "block";
     }
