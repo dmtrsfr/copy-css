@@ -206,7 +206,7 @@ function init(): void {
     toast.classList.add("visible");
     toastTimer = setTimeout(() => {
       toast.classList.remove("visible");
-    }, 1500);
+    }, 5000);
   }
 
   function copySnippet(html: string, css: string): void {
