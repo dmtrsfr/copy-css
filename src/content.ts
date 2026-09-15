@@ -27,6 +27,116 @@ function init(): void {
     }
   }
 
+  let panelHost: HTMLDivElement | null = null;
+  let panelTextarea: HTMLTextAreaElement | null = null;
+
+  function ensurePanel(): { textarea: HTMLTextAreaElement } {
+    if (panelHost && panelTextarea) {
+      return { textarea: panelTextarea };
+    }
+
+    panelHost = document.createElement("div");
+    panelHost.style.all = "initial";
+    panelHost.style.position = "fixed";
+    panelHost.style.zIndex = "2147483647";
+
+    const shadow = panelHost.attachShadow({ mode: "open" });
+
+    const style = document.createElement("style");
+    style.textContent = `
+      .panel {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 380px;
+        max-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        background: #1e1e1e;
+        color: #e6e6e6;
+        border: 1px solid #444;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 13px;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border-bottom: 1px solid #444;
+        font-weight: 600;
+      }
+      .close {
+        cursor: pointer;
+        background: none;
+        border: none;
+        color: #e6e6e6;
+        font-size: 16px;
+        line-height: 1;
+        padding: 2px 6px;
+      }
+      .close:hover {
+        color: #fff;
+      }
+      textarea {
+        flex: 1;
+        min-height: 200px;
+        margin: 12px;
+        margin-top: 8px;
+        padding: 8px;
+        background: #111;
+        color: #d4d4d4;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        resize: vertical;
+      }
+    `;
+
+    const panel = document.createElement("div");
+    panel.className = "panel";
+
+    const header = document.createElement("div");
+    header.className = "header";
+    const label = document.createElement("span");
+    label.textContent = "HTML";
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "close";
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", hidePanel);
+    header.appendChild(label);
+    header.appendChild(closeBtn);
+
+    const textarea = document.createElement("textarea");
+    textarea.readOnly = true;
+
+    panel.appendChild(header);
+    panel.appendChild(textarea);
+    shadow.appendChild(style);
+    shadow.appendChild(panel);
+
+    document.documentElement.appendChild(panelHost);
+    panelTextarea = textarea;
+    return { textarea };
+  }
+
+  function showPanel(html: string): void {
+    const { textarea } = ensurePanel();
+    textarea.value = html;
+    if (panelHost) {
+      panelHost.style.display = "block";
+    }
+  }
+
+  function hidePanel(): void {
+    if (panelHost) {
+      panelHost.style.display = "none";
+    }
+  }
+
   function positionOverlay(el: HTMLElement): void {
     const rect = el.getBoundingClientRect();
     overlay.style.left = `${rect.left}px`;
@@ -48,7 +158,7 @@ function init(): void {
     e.preventDefault();
     e.stopPropagation();
     if (hoveredEl) {
-      console.log("[grab-styles] selected element:", hoveredEl);
+      showPanel(hoveredEl.outerHTML);
     }
     deactivate();
   }
