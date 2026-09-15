@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Copy CSS",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Click any element to copy its HTML and computed CSS as a ready-to-use snippet. Great for cloning UI styles fast.",
   "action": {
     "default_title": "Copy CSS"
