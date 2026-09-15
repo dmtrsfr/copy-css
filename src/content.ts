@@ -63,11 +63,76 @@ function init(): void {
     }
   }
 
+  let toastHost: HTMLDivElement | null = null;
+  let toastEl: HTMLDivElement | null = null;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function ensureToast(): HTMLDivElement {
+    if (toastHost && toastEl) return toastEl;
+
+    toastHost = document.createElement("div");
+    toastHost.style.all = "initial";
+    toastHost.style.position = "fixed";
+    toastHost.style.zIndex = "2147483647";
+
+    const shadow = toastHost.attachShadow({ mode: "open" });
+    const style = document.createElement("style");
+    style.textContent = `
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translate(-50%, 8px);
+        padding: 8px 16px;
+        background: #1e1e1e;
+        color: #e6e6e6;
+        border: 1px solid #444;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        pointer-events: none;
+      }
+      .toast.visible {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    `;
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = "Copied to clipboard";
+
+    shadow.appendChild(style);
+    shadow.appendChild(toast);
+    document.documentElement.appendChild(toastHost);
+    toastEl = toast;
+    return toast;
+  }
+
+  function showToast(message: string): void {
+    const toast = ensureToast();
+    toast.textContent = message;
+    if (toastTimer) clearTimeout(toastTimer);
+    // force reflow so re-triggering the transition works if already visible
+    toast.classList.remove("visible");
+    void toast.offsetWidth;
+    toast.classList.add("visible");
+    toastTimer = setTimeout(() => {
+      toast.classList.remove("visible");
+    }, 1500);
+  }
+
   function copySnippet(html: string, css: string): void {
     const snippet = `<style>\n${css}\n</style>\n${html}`;
-    navigator.clipboard.writeText(snippet).catch((err) => {
-      console.error("[grab-styles] failed to copy to clipboard:", err);
-    });
+    navigator.clipboard
+      .writeText(snippet)
+      .then(() => showToast("Copied to clipboard"))
+      .catch((err) => {
+        console.error("[grab-styles] failed to copy to clipboard:", err);
+        showToast("Copy failed");
+      });
   }
 
   function positionOverlay(el: HTMLElement): void {
