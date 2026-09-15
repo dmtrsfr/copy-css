@@ -16,13 +16,36 @@ function describeElement(el: Element): string {
   return desc;
 }
 
+let referenceContainer: HTMLDivElement | null = null;
+const referenceStyleCache = new Map<string, CSSStyleDeclaration>();
+
+function getReferenceStyle(tagName: string): CSSStyleDeclaration {
+  const cached = referenceStyleCache.get(tagName);
+  if (cached) return cached;
+
+  if (!referenceContainer) {
+    referenceContainer = document.createElement("div");
+    referenceContainer.style.cssText =
+      "all: initial; position: absolute; top: -99999px; left: -99999px; visibility: hidden; pointer-events: none;";
+    document.documentElement.appendChild(referenceContainer);
+  }
+  const ref = document.createElement(tagName);
+  referenceContainer.appendChild(ref);
+  const cs = getComputedStyle(ref);
+  referenceStyleCache.set(tagName, cs);
+  return cs;
+}
+
 function computedStyleDeclarations(el: Element): string {
   const cs = getComputedStyle(el);
+  const ref = getReferenceStyle(el.tagName.toLowerCase());
   const lines: string[] = [];
   for (let i = 0; i < cs.length; i++) {
     const prop = cs[i];
     if (prop.startsWith("--")) continue;
-    lines.push(`  ${prop}: ${cs.getPropertyValue(prop)};`);
+    const value = cs.getPropertyValue(prop);
+    if (value === ref.getPropertyValue(prop)) continue;
+    lines.push(`  ${prop}: ${value};`);
   }
   return lines.join("\n");
 }
