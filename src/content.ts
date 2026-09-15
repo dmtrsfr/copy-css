@@ -5,6 +5,34 @@ interface GrabStylesWindow extends Window {
 
 const win = window as GrabStylesWindow;
 
+function describeElement(el: Element): string {
+  let desc = el.tagName.toLowerCase();
+  if (el.id) desc += `#${el.id}`;
+  if (el.classList.length) {
+    desc += Array.from(el.classList)
+      .map((c) => `.${c}`)
+      .join("");
+  }
+  return desc;
+}
+
+function computedStyleBlock(el: Element): string {
+  const cs = getComputedStyle(el);
+  const lines: string[] = [];
+  for (let i = 0; i < cs.length; i++) {
+    const prop = cs[i];
+    lines.push(`${prop}: ${cs.getPropertyValue(prop)};`);
+  }
+  return lines.join("\n");
+}
+
+function buildCssForSubtree(root: Element): string {
+  const elements = [root, ...Array.from(root.querySelectorAll("*"))];
+  return elements
+    .map((el) => `/* ${describeElement(el)} */\n${computedStyleBlock(el)}`)
+    .join("\n\n");
+}
+
 function init(): void {
   win.__grabStylesInitialized = true;
 
@@ -28,11 +56,12 @@ function init(): void {
   }
 
   let panelHost: HTMLDivElement | null = null;
-  let panelTextarea: HTMLTextAreaElement | null = null;
+  let htmlTextarea: HTMLTextAreaElement | null = null;
+  let cssTextarea: HTMLTextAreaElement | null = null;
 
-  function ensurePanel(): { textarea: HTMLTextAreaElement } {
-    if (panelHost && panelTextarea) {
-      return { textarea: panelTextarea };
+  function ensurePanel(): { html: HTMLTextAreaElement; css: HTMLTextAreaElement } {
+    if (panelHost && htmlTextarea && cssTextarea) {
+      return { html: htmlTextarea, css: cssTextarea };
     }
 
     panelHost = document.createElement("div");
@@ -48,8 +77,8 @@ function init(): void {
         position: fixed;
         top: 16px;
         right: 16px;
-        width: 380px;
-        max-height: 70vh;
+        width: 420px;
+        max-height: 85vh;
         display: flex;
         flex-direction: column;
         background: #1e1e1e;
@@ -80,11 +109,22 @@ function init(): void {
       .close:hover {
         color: #fff;
       }
+      .field-label {
+        margin: 8px 12px 0;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #999;
+      }
+      .body {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
       textarea {
-        flex: 1;
-        min-height: 200px;
-        margin: 12px;
-        margin-top: 8px;
+        height: 160px;
+        margin: 6px 12px 12px;
         padding: 8px;
         background: #111;
         color: #d4d4d4;
@@ -102,7 +142,7 @@ function init(): void {
     const header = document.createElement("div");
     header.className = "header";
     const label = document.createElement("span");
-    label.textContent = "HTML";
+    label.textContent = "Grab Styles";
     const closeBtn = document.createElement("button");
     closeBtn.className = "close";
     closeBtn.textContent = "×";
@@ -110,22 +150,41 @@ function init(): void {
     header.appendChild(label);
     header.appendChild(closeBtn);
 
-    const textarea = document.createElement("textarea");
-    textarea.readOnly = true;
+    const body = document.createElement("div");
+    body.className = "body";
+
+    const htmlLabel = document.createElement("div");
+    htmlLabel.className = "field-label";
+    htmlLabel.textContent = "HTML";
+    const htmlArea = document.createElement("textarea");
+    htmlArea.readOnly = true;
+
+    const cssLabel = document.createElement("div");
+    cssLabel.className = "field-label";
+    cssLabel.textContent = "CSS";
+    const cssArea = document.createElement("textarea");
+    cssArea.readOnly = true;
+
+    body.appendChild(htmlLabel);
+    body.appendChild(htmlArea);
+    body.appendChild(cssLabel);
+    body.appendChild(cssArea);
 
     panel.appendChild(header);
-    panel.appendChild(textarea);
+    panel.appendChild(body);
     shadow.appendChild(style);
     shadow.appendChild(panel);
 
     document.documentElement.appendChild(panelHost);
-    panelTextarea = textarea;
-    return { textarea };
+    htmlTextarea = htmlArea;
+    cssTextarea = cssArea;
+    return { html: htmlArea, css: cssArea };
   }
 
-  function showPanel(html: string): void {
-    const { textarea } = ensurePanel();
-    textarea.value = html;
+  function showPanel(html: string, css: string): void {
+    const { html: htmlArea, css: cssArea } = ensurePanel();
+    htmlArea.value = html;
+    cssArea.value = css;
     if (panelHost) {
       panelHost.style.display = "block";
     }
@@ -158,7 +217,7 @@ function init(): void {
     e.preventDefault();
     e.stopPropagation();
     if (hoveredEl) {
-      showPanel(hoveredEl.outerHTML);
+      showPanel(hoveredEl.outerHTML, buildCssForSubtree(hoveredEl));
     }
     deactivate();
   }
