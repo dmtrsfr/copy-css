@@ -16,6 +16,66 @@ function describeElement(el: Element): string {
   return desc;
 }
 
+const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+function escapeText(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+function serializeAttrs(el: Element): string {
+  return Array.from(el.attributes)
+    .map((attr) => ` ${attr.name}="${escapeAttr(attr.value)}"`)
+    .join("");
+}
+
+function prettyPrintElement(el: Element, depth = 0): string {
+  const indent = "  ".repeat(depth);
+  const tag = el.tagName.toLowerCase();
+  const attrs = serializeAttrs(el);
+  const openTag = `<${tag}${attrs}>`;
+
+  if (VOID_ELEMENTS.has(tag)) {
+    return `${indent}${openTag}`;
+  }
+
+  const childLines: string[] = [];
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      childLines.push(prettyPrintElement(child as Element, depth + 1));
+    } else if (child.nodeType === Node.TEXT_NODE) {
+      const text = child.textContent?.trim();
+      if (text) {
+        childLines.push(`${"  ".repeat(depth + 1)}${escapeText(text)}`);
+      }
+    }
+  }
+
+  if (childLines.length === 0) {
+    return `${indent}${openTag}</${tag}>`;
+  }
+
+  return `${indent}${openTag}\n${childLines.join("\n")}\n${indent}</${tag}>`;
+}
+
 let referenceContainer: HTMLDivElement | null = null;
 const referenceStyleCache = new Map<string, CSSStyleDeclaration>();
 
@@ -179,7 +239,7 @@ function init(): void {
     e.preventDefault();
     e.stopPropagation();
     if (hoveredEl) {
-      copySnippet(hoveredEl.outerHTML, buildCssForSubtree(hoveredEl));
+      copySnippet(prettyPrintElement(hoveredEl), buildCssForSubtree(hoveredEl));
     }
     deactivate();
   }
