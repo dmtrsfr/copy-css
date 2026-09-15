@@ -16,21 +16,28 @@ function describeElement(el: Element): string {
   return desc;
 }
 
-function computedStyleBlock(el: Element): string {
+function computedStyleDeclarations(el: Element): string {
   const cs = getComputedStyle(el);
   const lines: string[] = [];
   for (let i = 0; i < cs.length; i++) {
     const prop = cs[i];
     if (prop.startsWith("--")) continue;
-    lines.push(`${prop}${cs.getPropertyValue(prop)}`);
+    lines.push(`  ${prop}: ${cs.getPropertyValue(prop)};`);
   }
   return lines.join("\n");
 }
 
 function buildCssForSubtree(root: Element): string {
   const elements = [root, ...Array.from(root.querySelectorAll("*"))];
+  const seen = new Map<string, number>();
   return elements
-    .map((el) => `/* ${describeElement(el)} */\n${computedStyleBlock(el)}`)
+    .map((el) => {
+      const base = describeElement(el);
+      const count = (seen.get(base) ?? 0) + 1;
+      seen.set(base, count);
+      const selector = count > 1 ? `${base} /* ${count} */` : base;
+      return `${selector} {\n${computedStyleDeclarations(el)}\n}`;
+    })
     .join("\n\n");
 }
 
