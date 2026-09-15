@@ -167,6 +167,8 @@ function init(): void {
         left: 50%;
         transform: translate(-50%, 8px);
         padding: 8px 16px;
+        max-width: 320px;
+        text-align: center;
         background: #1e1e1e;
         color: #e6e6e6;
         border: 1px solid #444;
@@ -211,7 +213,9 @@ function init(): void {
     const snippet = `<style>\n${css}\n</style>\n${html}`;
     navigator.clipboard
       .writeText(snippet)
-      .then(() => showToast("Copied to clipboard"))
+      .then(() =>
+        showToast("Copied HTML and CSS to clipboard. Put it into clone-style-source.html in your project")
+      )
       .catch((err) => {
         console.error("[grab-styles] failed to copy to clipboard:", err);
         showToast("Copy failed");
