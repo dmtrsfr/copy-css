@@ -63,134 +63,11 @@ function init(): void {
     }
   }
 
-  let panelHost: HTMLDivElement | null = null;
-  let snippetTextarea: HTMLTextAreaElement | null = null;
-
-  function ensurePanel(): { snippet: HTMLTextAreaElement } {
-    if (panelHost && snippetTextarea) {
-      return { snippet: snippetTextarea };
-    }
-
-    panelHost = document.createElement("div");
-    panelHost.style.all = "initial";
-    panelHost.style.position = "fixed";
-    panelHost.style.zIndex = "2147483647";
-
-    const shadow = panelHost.attachShadow({ mode: "open" });
-
-    const style = document.createElement("style");
-    style.textContent = `
-      .panel {
-        position: fixed;
-        top: 16px;
-        right: 16px;
-        width: 420px;
-        max-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        background: #1e1e1e;
-        color: #e6e6e6;
-        border: 1px solid #444;
-        border-radius: 8px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        font-size: 13px;
-      }
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
-        border-bottom: 1px solid #444;
-        font-weight: 600;
-      }
-      .close {
-        cursor: pointer;
-        background: none;
-        border: none;
-        color: #e6e6e6;
-        font-size: 16px;
-        line-height: 1;
-        padding: 2px 6px;
-      }
-      .close:hover {
-        color: #fff;
-      }
-      .field-label {
-        margin: 8px 12px 0;
-        font-weight: 600;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #999;
-      }
-      .body {
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
-      textarea {
-        height: 400px;
-        margin: 6px 12px 12px;
-        padding: 8px;
-        background: #111;
-        color: #d4d4d4;
-        border: 1px solid #333;
-        border-radius: 4px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 12px;
-        resize: vertical;
-      }
-    `;
-
-    const panel = document.createElement("div");
-    panel.className = "panel";
-
-    const header = document.createElement("div");
-    header.className = "header";
-    const label = document.createElement("span");
-    label.textContent = "Grab Styles";
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "close";
-    closeBtn.textContent = "×";
-    closeBtn.addEventListener("click", hidePanel);
-    header.appendChild(label);
-    header.appendChild(closeBtn);
-
-    const body = document.createElement("div");
-    body.className = "body";
-
-    const snippetLabel = document.createElement("div");
-    snippetLabel.className = "field-label";
-    snippetLabel.textContent = "HTML + CSS";
-    const snippetArea = document.createElement("textarea");
-    snippetArea.readOnly = true;
-
-    body.appendChild(snippetLabel);
-    body.appendChild(snippetArea);
-
-    panel.appendChild(header);
-    panel.appendChild(body);
-    shadow.appendChild(style);
-    shadow.appendChild(panel);
-
-    document.documentElement.appendChild(panelHost);
-    snippetTextarea = snippetArea;
-    return { snippet: snippetArea };
-  }
-
-  function showPanel(html: string, css: string): void {
-    const { snippet } = ensurePanel();
-    snippet.value = `<style>\n${css}\n</style>\n${html}`;
-    if (panelHost) {
-      panelHost.style.display = "block";
-    }
-  }
-
-  function hidePanel(): void {
-    if (panelHost) {
-      panelHost.style.display = "none";
-    }
+  function copySnippet(html: string, css: string): void {
+    const snippet = `<style>\n${css}\n</style>\n${html}`;
+    navigator.clipboard.writeText(snippet).catch((err) => {
+      console.error("[grab-styles] failed to copy to clipboard:", err);
+    });
   }
 
   function positionOverlay(el: HTMLElement): void {
@@ -214,7 +91,7 @@ function init(): void {
     e.preventDefault();
     e.stopPropagation();
     if (hoveredEl) {
-      showPanel(hoveredEl.outerHTML, buildCssForSubtree(hoveredEl));
+      copySnippet(hoveredEl.outerHTML, buildCssForSubtree(hoveredEl));
     }
     deactivate();
   }
