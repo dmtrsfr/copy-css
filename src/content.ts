@@ -21,7 +21,8 @@ function computedStyleBlock(el: Element): string {
   const lines: string[] = [];
   for (let i = 0; i < cs.length; i++) {
     const prop = cs[i];
-    lines.push(`${prop}: ${cs.getPropertyValue(prop)};`);
+    if (prop.startsWith("--")) continue;
+    lines.push(`${prop}${cs.getPropertyValue(prop)}`);
   }
   return lines.join("\n");
 }
