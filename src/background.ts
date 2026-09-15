@@ -4,5 +4,5 @@ chrome.action.onClicked.addListener(async (tab) => {
     target: { tabId: tab.id },
     files: ["content.js"],
   });
-  await chrome.tabs.sendMessage(tab.id, { type: "grab-styles:toggle-picker" });
+  await chrome.tabs.sendMessage(tab.id, { type: "copy-css:toggle-picker" });
 });

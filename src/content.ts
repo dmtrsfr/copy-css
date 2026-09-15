@@ -1,9 +1,9 @@
-interface GrabStylesWindow extends Window {
-  __grabStylesInitialized?: boolean;
-  __grabStylesTogglePicker?: () => void;
+interface CopyCssWindow extends Window {
+  __copyCssInitialized?: boolean;
+  __copyCssTogglePicker?: () => void;
 }
 
-const win = window as GrabStylesWindow;
+const win = window as CopyCssWindow;
 
 function describeElement(el: Element): string {
   let desc = el.tagName.toLowerCase();
@@ -125,7 +125,7 @@ function buildCssForSubtree(root: Element): string {
 }
 
 function init(): void {
-  win.__grabStylesInitialized = true;
+  win.__copyCssInitialized = true;
 
   let active = false;
   let hoveredEl: HTMLElement | null = null;
@@ -214,10 +214,10 @@ function init(): void {
     navigator.clipboard
       .writeText(snippet)
       .then(() =>
-        showToast("Copied HTML and CSS to clipboard. Put it into clone-style-source.html in your project")
+        showToast("Copied HTML and CSS to clipboard. You can now place the snippet into your project.")
       )
       .catch((err) => {
-        console.error("[grab-styles] failed to copy to clipboard:", err);
+        console.error("[copy-css] failed to copy to clipboard:", err);
         showToast("Copy failed");
       });
   }
@@ -274,7 +274,7 @@ function init(): void {
     hoveredEl = null;
   }
 
-  win.__grabStylesTogglePicker = (): void => {
+  win.__copyCssTogglePicker = (): void => {
     if (active) {
       deactivate();
     } else {
@@ -283,11 +283,11 @@ function init(): void {
   };
 }
 
-if (!win.__grabStylesInitialized) {
+if (!win.__copyCssInitialized) {
   init();
   chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === "grab-styles:toggle-picker") {
-      win.__grabStylesTogglePicker?.();
+    if (message?.type === "copy-css:toggle-picker") {
+      win.__copyCssTogglePicker?.();
     }
   });
 }

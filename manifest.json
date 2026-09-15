@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Grab Styles",
+  "name": "Copy CSS",
   "version": "0.1.0",
-  "description": "Toggle an inspect-element picker to select elements on the page.",
+  "description": "Click any element to copy its HTML and computed CSS as a ready-to-use snippet. Great for cloning UI styles fast.",
   "action": {
-    "default_title": "Grab Styles: toggle element picker"
+    "default_title": "Copy CSS"
   },
   "background": {
     "service_worker": "background.js",
